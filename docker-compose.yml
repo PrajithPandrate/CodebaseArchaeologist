@@ -1,0 +1,95 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: archaeologist_postgres
+    environment:
+      POSTGRES_USER: archaeologist
+      POSTGRES_PASSWORD: archaeologist_secret
+      POSTGRES_DB: archaeologist_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U archaeologist -d archaeologist_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: archaeologist_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: archaeologist_backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://archaeologist:archaeologist_secret@postgres:5432/archaeologist_db
+      REDIS_URL: redis://redis:6379/0
+      REPOS_DIR: /repos
+      SECRET_KEY: dev_secret_key_change_in_production
+    volumes:
+      - ./backend:/app
+      - repos_data:/repos
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: archaeologist_worker
+    environment:
+      DATABASE_URL: postgresql+asyncpg://archaeologist:archaeologist_secret@postgres:5432/archaeologist_db
+      REDIS_URL: redis://redis:6379/0
+      REPOS_DIR: /repos
+      SECRET_KEY: dev_secret_key_change_in_production
+    volumes:
+      - ./backend:/app
+      - repos_data:/repos
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.workers.celery_app worker --loglevel=info --concurrency=2
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: archaeologist_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  repos_data:
