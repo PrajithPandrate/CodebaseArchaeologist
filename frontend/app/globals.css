@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222 47% 6%;
+    --foreground: 213 31% 91%;
+    --card: 222 47% 9%;
+    --card-foreground: 213 31% 91%;
+    --popover: 222 47% 8%;
+    --popover-foreground: 213 31% 91%;
+    --primary: 210 100% 56%;
+    --primary-foreground: 222 47% 6%;
+    --secondary: 222 47% 14%;
+    --secondary-foreground: 213 31% 91%;
+    --muted: 223 47% 12%;
+    --muted-foreground: 215 20% 55%;
+    --accent: 216 100% 60%;
+    --accent-foreground: 222 47% 6%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 222 47% 15%;
+    --input: 222 47% 14%;
+    --ring: 210 100% 56%;
+    --radius: 0.5rem;
+    --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-background;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
+  }
+}
+
+@layer components {
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+  }
+  .glow-amber {
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.15);
+  }
+  .text-gradient {
+    @apply bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent;
+  }
+  .card-hover {
+    @apply transition-all duration-200 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5;
+  }
+}
